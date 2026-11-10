@@ -23,35 +23,7 @@
             android:layout_marginTop="12dp"
             android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/btnRefrescar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_refrescar" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="@string/titulo_clave"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/etClave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:autofillHints="smsOTPCode"
-            android:hint="@string/hint_clave"
-            android:inputType="numberPassword"
-            android:maxLength="6"
-            android:minHeight="48dp" />
-
-        <Button
-            android:id="@+id/btnValidar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_validar" />
-
+        <!-- Solo visible para ADMIN -->
         <LinearLayout
             android:id="@+id/layoutAdmin"
             android:layout_width="match_parent"
@@ -63,25 +35,84 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/titulo_generar"
+                android:text="@string/titulo_control"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnAbrir"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_abrir" />
+
+            <Button
+                android:id="@+id/btnCerrar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_cerrar" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/titulo_tarjetas"
                 android:textStyle="bold" />
 
             <EditText
-                android:id="@+id/etMinutos"
+                android:id="@+id/etUid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_minutos"
+                android:hint="@string/hint_uid"
                 android:importantForAutofill="no"
-                android:inputType="number"
-                android:maxLength="2"
-                android:minHeight="48dp"
-                android:text="5" />
+                android:inputType="textCapCharacters|textNoSuggestions"
+                android:maxLength="8"
+                android:minHeight="48dp" />
 
             <Button
-                android:id="@+id/btnGenerar"
+                android:id="@+id/btnAddTarjeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/btn_generar" />
+                android:text="@string/btn_add_tarjeta" />
+
+            <Button
+                android:id="@+id/btnDelTarjeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_del_tarjeta" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/titulo_claves"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etClaveNueva"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_clave_nueva"
+                android:importantForAutofill="no"
+                android:inputType="numberPassword"
+                android:maxLength="8"
+                android:minHeight="48dp" />
+
+            <Button
+                android:id="@+id/btnAddClave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_add_clave" />
+
+            <Button
+                android:id="@+id/btnDelClave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_del_clave" />
+
+            <Button
+                android:id="@+id/btnGenerarClave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_generar_clave" />
 
             <TextView
                 android:id="@+id/tvClaveGenerada"

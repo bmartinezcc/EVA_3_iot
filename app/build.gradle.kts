@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -9,7 +10,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.eva_2"
+        applicationId = "com.example.eva_3"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -44,6 +45,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

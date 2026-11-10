@@ -6,12 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import com.example.eva_2.databinding.FragmentHistorialBinding
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-/** Consulta de datos guardados en AWS RDS (bitácora). ADMIN ve todo, USUARIO solo lo suyo. */
+/** Historial de intentos de acceso guardados en Firestore (últimos 50). */
 class HistorialFragment : Fragment() {
 
     private var _binding: FragmentHistorialBinding? = null
@@ -26,39 +27,40 @@ class HistorialFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val sesion = SessionManager(requireContext().applicationContext)
+        val formato = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val r = ApiClient.llamar("historial.php", "GET", null, sesion.token)
-            val b = _binding ?: return@launch
-            b.progreso.visibility = View.GONE
-            when {
-                r.codigo == -1 -> { b.tvVacio.setText(R.string.error_red); b.tvVacio.visibility = View.VISIBLE }
-                r.codigo == 401 -> {
-                    sesion.cerrar()
-                    findNavController().navigate(R.id.action_global_loginFragment)
-                }
-                r.exito -> {
-                    val eventos = r.json!!.getJSONArray("eventos")
-                    val lineas = (0 until eventos.length()).map { i ->
-                        val e = eventos.getJSONObject(i)
-                        val ip = e.optString("ip").takeIf { it.isNotEmpty() && it != "null" }
-                        buildString {
-                            append(e.optString("creado_en")).append("\n")
-                            append(e.optString("usuario").ifEmpty { "-" }).append(" · ")
-                            append(e.optString("evento"))
-                            val det = e.optString("detalle")
-                            if (det.isNotEmpty() && det != "null") append(" · ").append(det)
-                            if (ip != null) append(" · ").append(ip)
-                        }
+        FirebaseFirestore.getInstance()
+            .collection("dispositivos").document(Config.DISPOSITIVO_ID)
+            .collection("eventos")
+            .orderBy("recibido", Query.Direction.DESCENDING)
+            .limit(50)
+            .get()
+            .addOnSuccessListener { resultado ->
+                val b = _binding ?: return@addOnSuccessListener
+                b.progreso.visibility = View.GONE
+                val lineas = resultado.documents.map { d ->
+                    val fecha = d.getTimestamp("recibido")?.toDate()?.let { formato.format(it) } ?: "-"
+                    val concedido = d.getBoolean("ok") == true
+                    buildString {
+                        append(fecha).append("\n")
+                        append(if (concedido) "CONCEDIDO" else "DENEGADO")
+                        append(" · ").append(d.getString("metodo").orEmpty())
+                        val detalle = d.getString("detalle").orEmpty()
+                        if (detalle.isNotEmpty()) append(" · ").append(detalle)
+                        val uid = d.getString("uid").orEmpty()
+                        if (uid.isNotEmpty()) append(" · ").append(uid)
                     }
-                    if (lineas.isEmpty()) b.tvVacio.visibility = View.VISIBLE
-                    b.listaEventos.adapter =
-                        ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, lineas)
                 }
-                else -> { b.tvVacio.text = r.mensaje; b.tvVacio.visibility = View.VISIBLE }
+                if (lineas.isEmpty()) b.tvVacio.visibility = View.VISIBLE
+                b.listaEventos.adapter =
+                    ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, lineas)
             }
-        }
+            .addOnFailureListener { e ->
+                val b = _binding ?: return@addOnFailureListener
+                b.progreso.visibility = View.GONE
+                b.tvVacio.text = e.localizedMessage ?: getString(R.string.error_red)
+                b.tvVacio.visibility = View.VISIBLE
+            }
     }
 
     override fun onDestroyView() {

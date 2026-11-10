@@ -1,0 +1,33 @@
+CAMBIOS: app EVA_2_iot -> versión Firebase (Firestore)
+======================================================
+
+CÓMO APLICARLO
+1. Cierra Android Studio.
+2. Descomprime este zip en la carpeta que CONTIENE a tu proyecto EVA_2_iot
+   (por ejemplo C:\Users\marti\AndroidStudioProjects) y elige "Reemplazar los archivos".
+   (Haz antes una copia de seguridad de tu carpeta.)
+3. Copia tu archivo google-services.json (el que descargas desde la consola de Firebase)
+   dentro de la carpeta  EVA_2_iot\app\   (junto a build.gradle.kts).
+   SIN ESE ARCHIVO LA APP NO COMPILA.
+4. Abre el proyecto en Android Studio y pulsa "Sync Now" (File > Sync Project with Gradle Files).
+5. Ejecuta la app.
+
+ARCHIVOS QUE CAMBIAN
+- build.gradle.kts                      (plugin google-services)
+- gradle/libs.versions.toml             (versiones de Firebase)
+- app/build.gradle.kts                  (dependencias Firebase Auth y Firestore)
+- app/src/main/java/com/example/eva_2/
+    LoginFragment.kt     login/registro con Firebase Authentication
+    PanelFragment.kt     estado en vivo del ESP32 + comandos (solo ADMIN)
+    HistorialFragment.kt historial de accesos desde Firestore
+    Config.kt            DISPOSITIVO_ID = "rfidtrack-bm01"  (debe ser igual al del ESP32 y al del puente)
+- app/src/main/res/layout/fragment_panel.xml
+- app/src/main/res/values/strings.xml
+- app/src/main/res/xml/network_security_config.xml   (solo HTTPS)
+
+ARCHIVO QUE SE QUITA
+- ApiClient.kt (ya no se usa). Si queda en tu carpeta no molesta: puedes borrarlo.
+
+PARA SER ADMIN
+Registra tu usuario en la app. Luego, en la consola de Firebase > Firestore > coleccion "usuarios" > tu documento,
+cambia el campo  rol  de USUARIO a ADMIN, y vuelve a iniciar sesión en la app.

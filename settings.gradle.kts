@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "EVA_2"
+rootProject.name = "EVA_3"
 include(":app")

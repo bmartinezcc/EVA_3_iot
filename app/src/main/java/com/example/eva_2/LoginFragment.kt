@@ -6,18 +6,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.eva_2.databinding.FragmentLoginBinding
-import kotlinx.coroutines.launch
-import org.json.JSONObject
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
-/** Pantalla simple de registro / inicio de sesión. */
+/**
+ * Registro / inicio de sesión con Firebase Authentication.
+ * El nombre y el rol (USUARIO o ADMIN) se guardan en Firestore: usuarios/{uid}.
+ * Los ADMIN se asignan a mano en la consola de Firebase (campo "rol").
+ */
 class LoginFragment : Fragment() {
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
     private lateinit var sesion: SessionManager
+    private val auth by lazy { FirebaseAuth.getInstance() }
+    private val db by lazy { FirebaseFirestore.getInstance() }
     private var modoRegistro = false
 
     override fun onCreateView(
@@ -31,14 +42,17 @@ class LoginFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         sesion = SessionManager(requireContext().applicationContext)
 
-        // Si ya hay una sesión guardada, se pasa directo al panel
-        if (sesion.estaLogueado) {
-            irAlPanel()
-            return
-        }
-
         binding.tvCambiarModo.setOnClickListener { cambiarModo(!modoRegistro) }
         binding.btnAccion.setOnClickListener { enviar() }
+
+        val actual = auth.currentUser
+        if (actual != null) {
+            // Ya hay sesión de Firebase: se carga el perfil y se pasa al panel
+            ocupado(true)
+            cargarPerfilYContinuar(actual.uid)
+        } else {
+            sesion.cerrar() // limpia cualquier sesión local antigua
+        }
     }
 
     private fun cambiarModo(registro: Boolean) {
@@ -64,38 +78,79 @@ class LoginFragment : Fragment() {
             binding.tvMensaje.text = "Ingresa tu nombre"; return
         }
 
-        val cuerpo = JSONObject().put("email", email).put("password", password)
-        if (modoRegistro) cuerpo.put("nombre", nombre)
-
         binding.tvMensaje.text = ""
-        binding.progreso.visibility = View.VISIBLE
-        binding.btnAccion.isEnabled = false
+        ocupado(true)
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val r = ApiClient.llamar(if (modoRegistro) "registro.php" else "login.php", "POST", cuerpo)
-            _binding ?: return@launch
-            binding.progreso.visibility = View.GONE
-            binding.btnAccion.isEnabled = true
-
-            when {
-                r.codigo == -1 -> binding.tvMensaje.setText(R.string.error_red)
-                !r.exito -> binding.tvMensaje.text = r.mensaje.ifEmpty { "Error (${r.codigo})" }
-                modoRegistro -> {
-                    cambiarModo(false)
-                    binding.etPassword.text?.clear()
-                    binding.tvMensaje.text = r.mensaje
+        if (modoRegistro) {
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener { res ->
+                    val uid = res.user?.uid
+                    if (uid == null) { ocupado(false); return@addOnSuccessListener }
+                    val perfil = hashMapOf<String, Any>(
+                        "nombre" to nombre,
+                        "email" to email,
+                        "rol" to "USUARIO",
+                        "creadoEn" to FieldValue.serverTimestamp()
+                    )
+                    db.collection("usuarios").document(uid).set(perfil)
+                        .addOnSuccessListener {
+                            sesion.guardar(uid, nombre, "USUARIO")
+                            ocupado(false)
+                            irAlPanel()
+                        }
+                        .addOnFailureListener { e -> mostrarError(e) }
                 }
-                else -> {
-                    val j = r.json!!
-                    sesion.guardar(j.getString("token"), j.getString("nombre"), j.getString("rol"))
-                    binding.etPassword.text?.clear()
-                    irAlPanel()
+                .addOnFailureListener { e -> mostrarError(e) }
+        } else {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener { res -> cargarPerfilYContinuar(res.user?.uid) }
+                .addOnFailureListener { e -> mostrarError(e) }
+        }
+    }
+
+    private fun cargarPerfilYContinuar(uid: String?) {
+        if (uid == null) { ocupado(false); return }
+        db.collection("usuarios").document(uid).get()
+            .addOnSuccessListener { d ->
+                val nombre = d.getString("nombre") ?: auth.currentUser?.email.orEmpty()
+                val rol = d.getString("rol") ?: "USUARIO"
+                sesion.guardar(uid, nombre, rol)
+                ocupado(false)
+                irAlPanel()
+            }
+            .addOnFailureListener {
+                ocupado(false)
+                if (sesion.token == uid) {
+                    irAlPanel() // sin conexión: se usa el perfil guardado en el teléfono
+                } else {
+                    _binding?.tvMensaje?.setText(R.string.error_red)
                 }
             }
+    }
+
+    private fun ocupado(si: Boolean) {
+        val b = _binding ?: return
+        b.progreso.visibility = if (si) View.VISIBLE else View.GONE
+        b.btnAccion.isEnabled = !si
+    }
+
+    private fun mostrarError(e: Exception) {
+        ocupado(false)
+        val b = _binding ?: return
+        b.etPassword.text?.clear()
+        b.tvMensaje.text = when (e) {
+            is FirebaseNetworkException -> getString(R.string.error_red)
+            is FirebaseAuthInvalidCredentialsException,
+            is FirebaseAuthInvalidUserException -> "Correo o contraseña incorrectos"
+            is FirebaseAuthUserCollisionException -> "Ese correo ya está registrado"
+            is FirebaseAuthWeakPasswordException -> "La contraseña es demasiado débil"
+            else -> e.localizedMessage ?: "Error desconocido"
         }
     }
 
     private fun irAlPanel() {
+        if (_binding == null || !isAdded) return
+        binding.etPassword.text?.clear()
         findNavController().navigate(R.id.action_loginFragment_to_panelFragment)
     }
 

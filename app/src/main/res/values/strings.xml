@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EVA_2 Acceso IoT</string>
+    <string name="app_name">AC-STATUS</string>
 
     <string name="label_login">Iniciar sesión</string>
     <string name="label_panel">Panel de acceso</string>
@@ -24,5 +24,19 @@
     <string name="btn_historial">Ver historial</string>
     <string name="btn_cerrar_sesion">Cerrar sesión</string>
     <string name="sin_datos">Sin eventos registrados</string>
-    <string name="error_red">No se pudo conectar con el servidor. Revisa la red WiFi y la IP de la Raspberry</string>
+    <string name="error_red">No se pudo conectar. Revisa tu conexión a Internet</string>
+
+    <!-- Versión Firebase / MQTT -->
+    <string name="titulo_control">Control de la puerta (ADMIN)</string>
+    <string name="btn_abrir">Abrir puerta</string>
+    <string name="btn_cerrar">Cerrar puerta</string>
+    <string name="titulo_tarjetas">Tarjetas RFID (ADMIN)</string>
+    <string name="hint_uid">UID de la tarjeta (8 caracteres, ej. DEADBEEF)</string>
+    <string name="btn_add_tarjeta">Agregar tarjeta</string>
+    <string name="btn_del_tarjeta">Eliminar tarjeta</string>
+    <string name="titulo_claves">Claves del teclado (ADMIN)</string>
+    <string name="hint_clave_nueva">Clave de 4 a 8 dígitos</string>
+    <string name="btn_add_clave">Agregar clave</string>
+    <string name="btn_del_clave">Eliminar clave</string>
+    <string name="btn_generar_clave">Generar clave aleatoria de 6 dígitos</string>
 </resources>
