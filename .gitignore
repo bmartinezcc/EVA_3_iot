@@ -18,3 +18,4 @@ serviceAccount*.json
 secrets.h
 *.pem
 *.key
+.idea/appInsightsSettings.xml
