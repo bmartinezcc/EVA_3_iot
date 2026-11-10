@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "EVA_3"
+rootProject.name = "EVA_3_iot"
 include(":app")
